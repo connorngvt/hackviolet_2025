@@ -1,81 +1,68 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from db import execute_query, execute_update  # Import the DB functions
 
 app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow requests from any frontend
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["*"],  # Allow GET, POST, PUT, DELETE
-    allow_headers=["*"],  # Allow all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
-
-# ✅ Temporary In-Memory Storage (Fake Database)
-fake_db = []
-
-id_counter = 1
 
 # ✅ Class for Recipe Data
 class Recipe(BaseModel):
-    recipe_name: str
+    name: str
     ingredients: list[str]
     instructions: list[str]
-
 
 # ✅ GET ALL RECIPES
 @app.get("/api/recipes")
 def get_recipes():
-    return fake_db
-
+    query = "SELECT * FROM recipes;"
+    recipes = execute_query(query)
+    return recipes
 
 # ✅ GET RECIPE BY ID
 @app.get("/api/recipes/{recipe_id}")
 def get_recipe(recipe_id: int):
-    for recipe in fake_db:
-        if recipe["id"] == recipe_id:
-            return recipe
-    raise HTTPException(status_code=404, detail="Recipe not found")
-
+    query = "SELECT * FROM recipes WHERE id = %s;"
+    recipe = execute_query(query, (recipe_id,))
+    if not recipe:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+    return recipe[0]
 
 # ✅ CREATE A NEW RECIPE
 @app.post("/api/recipes")
 def create_recipe(recipe: Recipe):
-    global id_counter
-    new_recipe = {
-        "id": id_counter,  # Assign a unique ID
-        "recipe_name": recipe.recipe_name,
-        "ingredients": recipe.ingredients,
-        "instructions": recipe.instructions
-    }
-    fake_db.append(new_recipe)  # Simulate database insert
-    id_counter += 1  # Increment ID counter
-    return {
-        "message": "Recipe created",
-        "recipe": new_recipe
-    }
-
+    query = """
+    INSERT INTO recipes (name, ingredients, instructions) 
+    VALUES (%s, %s, %s) RETURNING id, name, ingredients, instructions;
+    """
+    params = (recipe.name, recipe.ingredients, recipe.instructions)
+    new_recipe = execute_query(query, params)
+    if not new_recipe:
+        raise HTTPException(status_code=400, detail="Error creating recipe")
+    return {"message": "Recipe created", "recipe": new_recipe[0]}
 
 # ✅ UPDATE RECIPE BY ID
 @app.put("/api/recipes/{recipe_id}")
 def update_recipe(recipe_id: int, updated_recipe: Recipe):
-    for i, recipe in enumerate(fake_db):
-        if recipe["id"] == recipe_id:
-            fake_db[i] = {
-                "id": recipe_id,
-                "recipe_name": updated_recipe.recipe_name,
-                "ingredients": updated_recipe.ingredients,
-                "instructions": updated_recipe.instructions
-            }
-            return {"message": "Recipe updated"}
-    raise HTTPException(status_code=404, detail="Recipe not found")
+    query = """
+    UPDATE recipes 
+    SET name = %s, ingredients = %s, instructions = %s 
+    WHERE id = %s;
+    """
+    params = (updated_recipe.name, updated_recipe.ingredients, updated_recipe.instructions, recipe_id)
+    execute_update(query, params)
+    return {"message": "Recipe updated"}
 
 # ✅ DELETE A RECIPE BY ID
 @app.delete("/api/recipes/{recipe_id}")
 def delete_recipe(recipe_id: int):
-    for i, recipe in enumerate(fake_db):
-        if recipe["id"] == recipe_id:
-            del fake_db[i]  # Simulate database delete
-            return {"message": "Recipe deleted"}
-    raise HTTPException(status_code=404, detail="Recipe not found")
+    query = "DELETE FROM recipes WHERE id = %s;"
+    execute_update(query, (recipe_id,))
+    return {"message": "Recipe deleted"}

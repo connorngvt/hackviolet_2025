@@ -4,15 +4,7 @@ import axios from "axios";
 
 const RecipePage = () => {
   const [loading, setLoading] = useState(false);
-  const [savedRecipes, setSavedRecipes] = useState([
-    {
-      id: 1,
-      name: "Burger",
-      ingredients: "Burger",
-      instructions: "Burger",
-    },
-    { id: 2, name: "Hotdog", ingredients: "Hotdog", instructions: "Hotdog" },
-  ]);
+  const [savedRecipes, setSavedRecipes] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [recipeData, setRecipeData] = useState({
     id: null,
@@ -78,8 +70,8 @@ const RecipePage = () => {
           recipeData
         );
 
-        if (response.status === 201) {
-          setSavedRecipes([...savedRecipes, response.data]);
+        if (response.status === 200) {
+          setSavedRecipes([...savedRecipes, response.data.recipe]);
           setEditMode(false);
         } else {
           console.error("Unexpected response for POST", response);
@@ -91,11 +83,7 @@ const RecipePage = () => {
         );
 
         if (response.status === 200) {
-          setSavedRecipes(
-            savedRecipes.map((recipe) =>
-              recipe.id === recipeData.id ? response.data : recipe
-            )
-          );
+          fetchRecipes();
           setEditMode(false);
         } else {
           console.error("Unexpected response for PUT", response);
@@ -157,7 +145,7 @@ const RecipePage = () => {
           </ul>
         </div>
 
-        <div className="flex-2 p-5 flex flex-col items-center justify-center">
+        <div className="flex-2 p-5 flex flex-col items-center overflow-x-auto">
           {showSearchForm && (
             <form className="flex flex-col items-center justify-center w-full h-full">
               <div className="w-1/2 flex flex-col items-center justify-around bg-white p-7 rounded-2xl gap-3">
@@ -227,7 +215,7 @@ const RecipePage = () => {
           )}
 
           {recipeData && !editMode && !showSearchForm && (
-            <form className="bg-white w-1/2 flex flex-col p-5 gap-5">
+            <form className="bg-white w-3/4 flex flex-col p-5 gap-5">
               <div className="flex justify-between">
                 <h3 className="text-3xl">{recipeData.name}</h3>
                 <button

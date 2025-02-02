@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
+from db import execute_query, execute_update
 import requests
 import openai
 import json
@@ -24,10 +25,11 @@ class RecipeRequest(BaseModel):
     url: str
 
 
-class RecipeResponse(BaseModel):
+class Recipe(BaseModel):
     name: str
-    ingredients: list[str]
-    instructions: list[str]
+    ingredients: str
+    instructions: str
+
 
 
 def scrape_recipe(url: str):
@@ -56,9 +58,9 @@ def ask_openai(prompt: str):
             curate the recipe. After curating the recipe, format it into
             a structured json object with exclusively these 3 keys:
 
-            - name
-            - ingredients
-            - instructions
+            - name (string)
+            - ingredients (string)
+            - instructions (string)
 
             If the information extracted is not related or relevant to food
             and recipes, respond with "This is not a recipe" (No JSON needed).
@@ -106,7 +108,7 @@ async def scrape_recipe_endpoint(recipe_request: RecipeRequest):
         result = ask_openai(scraped_text)
         json_result = extract_json(result)
         if json_result:
-            return RecipeResponse(**json_result)
+            return Recipe(**json_result)
         else:
             raise HTTPException(
                 status_code=404, detail="Recipe not found or improperly formatted."
@@ -115,3 +117,56 @@ async def scrape_recipe_endpoint(recipe_request: RecipeRequest):
         raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@app.get("/api/recipes")
+def get_recipes():
+    query = "SELECT * FROM recipes;"
+    recipes = execute_query(query)
+    return recipes
+
+
+@app.get("/api/recipes/{recipe_id}")
+def get_recipe(recipe_id: int):
+    query = "SELECT * FROM recipes WHERE id = %s;"
+    recipe = execute_query(query, (recipe_id,))
+    if not recipe:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+    return recipe[0]
+
+
+@app.post("/api/recipes")
+def create_recipe(recipe: Recipe):
+    query = """
+    INSERT INTO recipes (name, ingredients, instructions) 
+    VALUES (%s, %s, %s) RETURNING id, name, ingredients, instructions;
+    """
+    params = (recipe.name, recipe.ingredients, recipe.instructions)
+    new_recipe = execute_query(query, params)
+    if not new_recipe:
+        raise HTTPException(status_code=400, detail="Error creating recipe")
+    return {"message": "Recipe created", "recipe": new_recipe[0]}
+
+
+@app.put("/api/recipes/{recipe_id}")
+def update_recipe(recipe_id: int, updated_recipe: Recipe):
+    query = """
+    UPDATE recipes 
+    SET name = %s, ingredients = %s, instructions = %s 
+    WHERE id = %s;
+    """
+    params = (
+        updated_recipe.name,
+        updated_recipe.ingredients,
+        updated_recipe.instructions,
+        recipe_id,
+    )
+    execute_update(query, params)
+    return {"message": "Recipe updated"}
+
+
+@app.delete("/api/recipes/{recipe_id}")
+def delete_recipe(recipe_id: int):
+    query = "DELETE FROM recipes WHERE id = %s;"
+    execute_update(query, (recipe_id,))
+    return {"message": "Recipe deleted"}
