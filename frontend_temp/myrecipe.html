@@ -211,11 +211,9 @@ button:hover {
                 <input type="text" placeholder="Search...">
             </div>
             <div class="list-container">
-                <div class="list-item">Item 1</div>
-                <div class="list-item">Item 2</div>
-                <div class="list-item">Item 3</div>
-                <div class="list-item">Item 4</div>
-                <div class="list-item">Item 5</div>
+                {% for recipe in recipes %}
+                    <div class="list-item">{{ recipe.id }} - {{ recipe.name }}</div>
+                {% endfor %}
             </div>
         </div>
         <div class="right-side">

@@ -211,20 +211,60 @@ button:hover {
                 <input type="text" placeholder="Search...">
             </div>
             <div class="list-container">
-                <div class="list-item">Item 1</div>
-                <div class="list-item">Item 2</div>
-                <div class="list-item">Item 3</div>
-                <div class="list-item">Item 4</div>
-                <div class="list-item">Item 5</div>
+                {% for recipe in recipes %}
+                    <div class="list-item">{{ recipe.id }} - {{ recipe.name }}</div>
+                {% endfor %}
             </div>
         </div>
         <div class="right-side">
-            <h1>Recipe</h1>
+            <h2>Organized JSON Recipe Data</h2>
+            <table id="data-table">
+                <thead>
+                    <tr id="table-head"></tr>
+                </thead>
+                <tbody id="table-body"></tbody>
+            </table>
+        
         </div>
     </div>
     <footer class="footer">
         <p>&copy; 2025 Tasty Recipe Saver | Preserving Flavors, One Recipe at a Time</p>
     </footer>
 </body>
+<script>
+    // Sample JSON Data (Can be fetched from a file or API)
+    const jsonData = [
+        { "id": 1, "name": "Apple", "category": "Fruit", "price": "$1.50" },
+        { "id": 2, "name": "Carrot", "category": "Vegetable", "price": "$0.75" },
+        { "id": 3, "name": "Salmon", "category": "Fish", "price": "$10.00" }
+    ];
 
+    function displayData(data) {
+        const tableHead = document.getElementById("table-head");
+        const tableBody = document.getElementById("table-body");
+
+        // Generate Table Headers Dynamically
+        tableHead.innerHTML = "";
+        const headers = Object.keys(data[0]);
+        headers.forEach(header => {
+            const th = document.createElement("th");
+            th.textContent = header.toUpperCase();
+            tableHead.appendChild(th);
+        });
+
+        // Generate Table Rows
+        tableBody.innerHTML = "";
+        data.forEach(item => {
+            const tr = document.createElement("tr");
+            headers.forEach(header => {
+                const td = document.createElement("td");
+                td.textContent = item[header];
+                tr.appendChild(td);
+            });
+            tableBody.appendChild(tr);
+        });
+    }
+
+    displayData(jsonData);
+</script>
 </html>
