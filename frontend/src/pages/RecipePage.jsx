@@ -89,16 +89,19 @@ const RecipePage = () => {
 
         if (response.status === 200) {
           setSavedRecipes([...savedRecipes, response.data.recipe]);
+          setRecipeData(response.data.recipe);
           setEditMode(false);
           toast.success("Recipe saved successfully.");
         } else {
           toast.error("Recipe failed to save:", response);
         }
       } else {
+        
         const response = await axios.put(
           `http://127.0.0.1:8000/api/recipes/${recipeData.id}`,
           recipeData
         );
+        
 
         if (response.status === 200) {
           fetchRecipes();
@@ -132,8 +135,8 @@ const RecipePage = () => {
         alt=""
         className="fixed top-0 left-0 w-full h-full object-cover -z-1 opacity-60"
       />
-      <div class="flex h-full">
-        <div class="flex-1 flex flex-col bg-gray-300 relative">
+      <div className="flex h-full">
+        <div className="flex-1 flex flex-col bg-gray-300 relative">
           <input
             type="text"
             placeholder="Search..."
@@ -141,7 +144,7 @@ const RecipePage = () => {
           />
           <ul className="h-full overflow-x-auto pt-15">
             <div
-              onClick={() => setShowSearchForm(true)}
+              onClick={() => {setShowSearchForm(true); setSearchQuery("")}}
               className="w-full text-lg md:text-2xl bg-gray-100 hover:bg-gray-50 border-b-1 cursor-pointer h-1/8 flex items-center py-2 px-4 transition-colors duration-300 ease-in-out"
             >
               Add New +
