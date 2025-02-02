@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from "react";
 import backgroundImage from "../assets/backgroundimage.jpeg";
 import axios from "axios";
+import { toast } from "react-toastify";
+import { IoTrashOutline } from "react-icons/io5";
+import { motion } from "framer-motion";
+import { FaSpinner } from "react-icons/fa";
 
 const RecipePage = () => {
   const [loading, setLoading] = useState(false);
@@ -16,30 +20,43 @@ const RecipePage = () => {
   const [showSearchForm, setShowSearchForm] = useState(true);
 
   useEffect(() => {
+    window.scrollTo(0, 0);
     fetchRecipes();
   }, []);
 
   const extractRecipeFromUrl = async (e) => {
     e.preventDefault();
     setLoading(true);
+
     if (searchQuery) {
       try {
         const response = await axios.post(
           `http://127.0.0.1:8000/api/scrape-recipe`,
           { url: searchQuery }
         );
+
         if (response.status === 200) {
           setRecipeData({ id: null, ...response.data });
           setEditMode(true);
           setShowSearchForm(false);
+          toast.success("Recipe found! Please confirm details.");
         } else {
-          console.error("Unexpected response", response);
+          toast.error("Failed to retrieve recipe data.");
         }
       } catch (error) {
-        console.error(
-          "Error extracting recipe",
-          error.response ? error.response.data : error.message
-        );
+        if (error.response) {
+          if (error.response.status === 400) {
+            toast.error(
+              "The provided URL doesn't seem to contain recipe data."
+            );
+          } else {
+            toast.error(
+              `Error: ${error.response.data.message || "Something went wrong."}`
+            );
+          }
+        } else {
+          toast.error(`Network error: ${error.message}`);
+        }
       }
     }
     setLoading(false);
@@ -50,7 +67,7 @@ const RecipePage = () => {
       const response = await axios.get("http://127.0.0.1:8000/api/recipes");
       setSavedRecipes(response.data);
     } catch (error) {
-      console.error("Error fetching recipes:", error);
+      toast.error("Error fetching recipes.");
     }
   };
 
@@ -73,8 +90,9 @@ const RecipePage = () => {
         if (response.status === 200) {
           setSavedRecipes([...savedRecipes, response.data.recipe]);
           setEditMode(false);
+          toast.success("Recipe saved successfully.");
         } else {
-          console.error("Unexpected response for POST", response);
+          toast.error("Recipe failed to save:", response);
         }
       } else {
         const response = await axios.put(
@@ -85,12 +103,13 @@ const RecipePage = () => {
         if (response.status === 200) {
           fetchRecipes();
           setEditMode(false);
+          toast.success("Recipe saved successfully.");
         } else {
-          console.error("Unexpected response for PUT", response);
+          toast.error("Recipe failed to update:", response);
         }
       }
     } catch (error) {
-      console.error("Error saving recipe:", error);
+      toast.error("Error saving recipe:", error);
     }
   };
 
@@ -98,8 +117,11 @@ const RecipePage = () => {
     try {
       await axios.delete(`http://127.0.0.1:8000/api/recipes/${id}`);
       setSavedRecipes(savedRecipes.filter((recipe) => recipe.id !== id));
+      setShowSearchForm(true);
+      setSearchQuery("");
+      toast.success("Recipe deleted successfully.");
     } catch (error) {
-      console.error("Error deleting recipe:", error);
+      toast.error("Error deleting recipe:", error);
     }
   };
 
@@ -120,26 +142,28 @@ const RecipePage = () => {
           <ul className="h-full overflow-x-auto pt-15">
             <div
               onClick={() => setShowSearchForm(true)}
-              className="w-full text-2xl bg-gray-100 hover:bg-gray-50 border-b-1 cursor-pointer h-1/8 flex items-center p-2"
+              className="w-full text-lg md:text-2xl bg-gray-100 hover:bg-gray-50 border-b-1 cursor-pointer h-1/8 flex items-center py-2 px-4 transition-colors duration-300 ease-in-out"
             >
-              Add New
+              Add New +
             </div>
             {savedRecipes.map((recipe) => (
               <div
                 key={recipe.id}
-                className="w-full bg-gray-200 hover:bg-gray-100 border-b-1 cursor-pointer h-1/8 flex items-center justify-between p-2"
+                className="w-full bg-gray-200 hover:bg-gray-100 border-b-1 cursor-pointer h-1/8 flex items-center justify-between py-2 px-4 transition-colors duration-300 ease-in-out"
                 onClick={() => fetchRecipeDetails(recipe.id)}
               >
-                <li className="text-2xl">{recipe.name}</li>
-                <button
-                  className="bg-red-700 hover:bg-red-600 text-white text-md p-1 rounded-2xl cursor-pointer"
+                <li className="text-lg md:text-2xl">{recipe.name}</li>
+                <motion.button
+                  className="shadow-md bg-red-700 hover:bg-red-600 text-white text-md p-1 rounded cursor-pointer transition-colors duration-300 ease-in-out"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   onClick={(e) => {
                     e.stopPropagation();
                     deleteRecipe(recipe.id);
                   }}
                 >
-                  Delete
-                </button>
+                  <IoTrashOutline className="w-5 h-5" />
+                </motion.button>
               </div>
             ))}
           </ul>
@@ -148,36 +172,57 @@ const RecipePage = () => {
         <div className="flex-2 p-5 flex flex-col items-center overflow-x-auto">
           {showSearchForm && (
             <form className="flex flex-col items-center justify-center w-full h-full">
-              <div className="w-1/2 flex flex-col items-center justify-around bg-white p-7 rounded-2xl gap-3">
-                <h2 className="text-3xl text-black font-bold">
+              <motion.div
+                initial={{ opacity: 0, y: -40 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, ease: "easeOut" }}
+                className="w-full lg:w-1/2 flex flex-col items-center justify-around bg-white p-7 rounded-2xl gap-3 shadow-lg"
+              >
+                <motion.h2
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
+                  className="text-2xl lg:text-3xl text-black font-bold text-center"
+                >
                   Enter Recipe Link:
-                </h2>
-                <input
+                </motion.h2>
+                <motion.input
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.3, ease: "easeOut" }}
                   type="link"
                   placeholder="Search for recipes..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="mt-5 px-4 py-3 text-xl w-full rounded-full outline-black outline-2"
                 />
-                <button
+                <motion.button
                   type="submit"
-                  className="mt-5 p-3 bg-blue-600 hover:bg-blue-500 text-white border-none cursor-pointer text-xl w-1/2 rounded-2xl disabled:cursor-not-allowed disabled:bg-blue-300"
+                  className="font-bold mt-5 p-3 bg-amber-400 hover:bg-amber-300 text-white border-none cursor-pointer text-xl w-full md:w-1/2 rounded-2xl disabled:cursor-not-allowed disabled:bg-amber-200 transition-colors duration-300 ease-in-out shadow-md"
                   onClick={extractRecipeFromUrl}
                   disabled={loading}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                 >
-                  {loading ? "Loading" : "Search"}
-                </button>
-              </div>
+                  {loading ? (
+                    <div className="flex items-center justify-center">
+                      <FaSpinner className="animate-spin mr-2" /> Loading
+                    </div>
+                  ) : (
+                    "Search"
+                  )}
+                </motion.button>
+              </motion.div>
             </form>
           )}
 
           {recipeData && editMode && !showSearchForm && (
-            <form className="bg-white w-1/2 flex flex-col p-5 gap-2">
+            <form className="bg-white w-full md:w-1/2 flex flex-col p-5 gap-2">
               <h3 className="text-3xl font-bold mb-3">Recipe Details</h3>
               <div className="flex items-center">
                 <label className="mr-3 text-xl">Recipe Name:</label>
                 <input
-                  className="text-xl py-2 px-4 bg-gray-200 rounded-full "
+                  className="text-xl py-2 px-4 bg-gray-200 rounded-full w-2/3 "
                   type="text"
                   value={recipeData.name}
                   onChange={(e) =>
@@ -204,26 +249,36 @@ const RecipePage = () => {
                 }
               />
 
-              <button
+              <motion.button
                 onClick={saveRecipe}
-                className="cursor-pointer bg-blue-500 hover:bg-blue-400 text-xl p-3 mt-3 rounded-full text-white font-bold disabled:cursor-not-allowed disabled:bg-blue-300"
+                className="cursor-pointer bg-amber-400 hover:bg-amber-300 text-xl p-3 mt-3 rounded-full text-white font-bold disabled:cursor-not-allowed disabled:bg-amber-200 transition-colors duration-300 ease-in-out"
                 disabled={loading}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
-                {loading ? "Loading" : "Confirm"}
-              </button>
+                {loading ? (
+                  <>
+                    <FaSpinner className="animate-spin mr-2" /> Loading
+                  </>
+                ) : (
+                  "Confirm"
+                )}
+              </motion.button>
             </form>
           )}
 
           {recipeData && !editMode && !showSearchForm && (
-            <form className="bg-white w-3/4 flex flex-col p-5 gap-5">
-              <div className="flex justify-between">
+            <form className="bg-white w-full md:w-3/4 flex flex-col p-5 gap-5">
+              <div className="flex justify-between items-center">
                 <h3 className="text-3xl">{recipeData.name}</h3>
-                <button
+                <motion.button
                   onClick={() => setEditMode(true)}
-                  className="text-xl bg-gray-200 hover:bg-gray-100 px-5 rounded-xl cursor-pointer"
+                  className="shadow-md text-xl h-md bg-gray-200 hover:bg-gray-100 px-5 rounded-xl cursor-pointer transition-colors duration-300 ease-in-out"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                 >
                   Edit
-                </button>
+                </motion.button>
               </div>
               <p className="font-bold text-xl">Ingredients:</p>
               <p className="text-lg">{recipeData.ingredients}</p>

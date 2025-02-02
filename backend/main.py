@@ -48,8 +48,6 @@ def ask_openai(prompt: str):
 
         api_key = os.getenv("OPEN_AI_API_KEY")
 
-        print(api_key)
-
         client = openai.OpenAI(api_key=api_key)
 
         instructions = """Your purpose is to extract the essential instructions 
