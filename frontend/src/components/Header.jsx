@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { IoMdMenu, IoMdClose } from "react-icons/io";
+import { Link } from "react-router-dom";
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -10,26 +11,26 @@ export default function Navbar() {
 
   return (
     <div>
-      <header className="bg-white p-5 flex justify-between items-center w-full z-1 h-20">
-        <div className="text-3xl font-bold text-green-700">Project Name</div>
+      <header className="fixed bg-white p-5 flex justify-between items-center w-full z-1 h-20">
+        <div className="text-3xl font-bold text-green-700">Recipe Retriever</div>
         <button className="cursor-pointer text-white z-10" type="button" onClick={handleMenuOpen}>
           <IoMdMenu size={50} color="black"/>
         </button>
       </header>
       <nav
-        className={`bg-red-300 fixed top-0 right-0 w-64 h-screen flex flex-col shadow-lg transition-transform duration-300 z-5 ${
+        className={`bg-gray-900 fixed top-0 right-0 w-64 h-screen flex flex-col shadow-lg transition-transform duration-300 z-5 p-3 ${
           menuOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        <button className="cursor-pointer text-white z-10" type="button" onClick={handleMenuOpen}>
+        <button className="cursor-pointer text-white z-10 w-10 mb-5" type="button" onClick={handleMenuOpen}>
           <IoMdClose size={50} />
         </button>
-        <ul className="p-5 space-y-5">
+        <ul className="p-2 space-y-8">
           <li>
-            <button className="text-2xl w-full text-left cursor-pointer">Home</button>
+            <Link to="/" className="text-2xl w-full text-left cursor-pointer text-white">Home</Link>
           </li>
           <li>
-            <button className="text-2xl w-full text-left cursor-pointer">My Recipes</button>
+            <Link to="/recipes" className="text-2xl w-full text-left cursor-pointer text-white">My Recipes</Link>
           </li>
         </ul>
       </nav>
