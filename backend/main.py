@@ -25,7 +25,7 @@ class RecipeRequest(BaseModel):
 
 
 class RecipeResponse(BaseModel):
-    recipe_name: str
+    name: str
     ingredients: list[str]
     instructions: list[str]
 
@@ -56,7 +56,7 @@ def ask_openai(prompt: str):
             curate the recipe. After curating the recipe, format it into
             a structured json object with exclusively these 3 keys:
 
-            - recipe_name
+            - name
             - ingredients
             - instructions
 
