@@ -217,17 +217,54 @@ button:hover {
             </div>
         </div>
         <div class="right-side">
-            <form>
-                <h2>Upload Recipe</h2>
-                <input type="link" placeholder="insert recipe here...">
-
-                <button type="submit">Submit</button>
-            </form>
+            <h2>Organized JSON Recipe Data</h2>
+            <table id="data-table">
+                <thead>
+                    <tr id="table-head"></tr>
+                </thead>
+                <tbody id="table-body"></tbody>
+            </table>
+        
         </div>
     </div>
     <footer class="footer">
         <p>&copy; 2025 Tasty Recipe Saver | Preserving Flavors, One Recipe at a Time</p>
     </footer>
 </body>
+<script>
+    // Sample JSON Data (Can be fetched from a file or API)
+    const jsonData = [
+        { "id": 1, "name": "Apple", "category": "Fruit", "price": "$1.50" },
+        { "id": 2, "name": "Carrot", "category": "Vegetable", "price": "$0.75" },
+        { "id": 3, "name": "Salmon", "category": "Fish", "price": "$10.00" }
+    ];
 
+    function displayData(data) {
+        const tableHead = document.getElementById("table-head");
+        const tableBody = document.getElementById("table-body");
+
+        // Generate Table Headers Dynamically
+        tableHead.innerHTML = "";
+        const headers = Object.keys(data[0]);
+        headers.forEach(header => {
+            const th = document.createElement("th");
+            th.textContent = header.toUpperCase();
+            tableHead.appendChild(th);
+        });
+
+        // Generate Table Rows
+        tableBody.innerHTML = "";
+        data.forEach(item => {
+            const tr = document.createElement("tr");
+            headers.forEach(header => {
+                const td = document.createElement("td");
+                td.textContent = item[header];
+                tr.appendChild(td);
+            });
+            tableBody.appendChild(tr);
+        });
+    }
+
+    displayData(jsonData);
+</script>
 </html>

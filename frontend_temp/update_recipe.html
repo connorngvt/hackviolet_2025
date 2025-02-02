@@ -188,6 +188,10 @@ button:hover {
     opacity: 0.6;
     /* Adjust transparency */
 }
+p{
+    font-weight: bold;
+    font-size: 18pt;
+}
 </style>    
 </head>
 
@@ -218,9 +222,11 @@ button:hover {
         </div>
         <div class="right-side">
             <form>
-                <h2>Upload Recipe</h2>
-                <input type="link" placeholder="insert recipe here...">
-
+                <h2>Update Changes</h2>
+                <p>Recipe Name:</p><input type="text"> 
+                <p>Ingredients:</p><input type="text" style="height: 100px;">
+                <p>Instructions:</p><input type="text" style= "height: 150px;">
+                <p>Image:</p><input type="file">
                 <button type="submit">Submit</button>
             </form>
         </div>

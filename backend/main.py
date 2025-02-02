@@ -2,10 +2,12 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from bs4 import BeautifulSoup
+from dotenv import load_dotenv
 import requests
 import openai
 import json
 import re
+import os
 
 app = FastAPI()
 
@@ -40,9 +42,13 @@ def scrape_recipe(url: str):
 
 def ask_openai(prompt: str):
     try:
-        client = openai.OpenAI(
-            api_key=""
-        )
+        load_dotenv()
+
+        api_key = os.getenv("OPEN_AI_API_KEY")
+
+        print(api_key)
+
+        client = openai.OpenAI(api_key=api_key)
 
         instructions = """Your purpose is to extract the essential instructions 
             of making this recipe, primarily including recipe name, 
